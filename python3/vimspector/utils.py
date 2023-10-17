@@ -777,19 +777,22 @@ def ParseVariables( variables_list,
           env = os.environ.copy()
           env.update( new_v.get( 'env' ) or {} )
           cmd = new_v[ 'shell' ]
+          detach = new_v [ 'detach' ]
           if not isinstance( cmd, list ):
             cmd = shlex.split( cmd )
+          if detach:
+            p = subprocess.Popen(cmd, start_new_session=True)
+          else:
+            new_variables[ n ] = subprocess.check_output(
+              cmd,
+              cwd = new_v.get( 'cwd' ) or os.getcwd(),
+              env = env ).decode( 'utf-8' ).strip()
 
-          new_variables[ n ] = subprocess.check_output(
-            cmd,
-            cwd = new_v.get( 'cwd' ) or os.getcwd(),
-            env = env ).decode( 'utf-8' ).strip()
-
-          _logger.debug( "Set new_variables[ %s ] to '%s' from %s from %s",
-                         n,
-                         new_variables[ n ],
-                         new_v,
-                         v )
+            _logger.debug( "Set new_variables[ %s ] to '%s' from %s from %s",
+                           n,
+                           new_variables[ n ],
+                           new_v,
+                           v )
         else:
           raise ValueError(
             "Unsupported variable defn {}: Missing 'shell'".format( n ) )
